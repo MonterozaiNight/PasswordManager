@@ -39,7 +39,9 @@ def generate_passphrase():
 
     ### パスフレーズを暗号化します。
     # Credentialsクラスをインスタンス化
-    cred = Credentials.Credentials("", "", "".join(passphrase_list))
+    cred = Credentials.Credentials()
+    # Credentialsクラスのパスフレーズを設定
+    cred.passphrase = "".join(passphrase_list)
     # 暗号化パスフレーズを取得します。
     encrypted_passphrase = cred.encrypted_passphrase(user_password, salt_bytes)
 
@@ -92,8 +94,13 @@ def decrypt_password():
     with open("passphrase.json", "r") as f:
         passphrase = json.load(f)
 
-    ### Credentialsクラスのインスタンスを作成し、秘密鍵を復号化してパスワードを取得
-    cred = Credentials.Credentials(credentials["login_id"], credentials["encrypted_password"], "")
+    ### Credentialsクラスのインスタンスを作成し、CredentialsクラスにログインIDと暗号化パスワードを割り当てます。
+    # インスタンス化
+    cred = Credentials.Credentials()
+    # ログインID
+    cred.username = credentials["login_id"]
+    # 暗号化パスワード
+    cred.password = credentials["encrypted_password"]
 
     ### パスフレーズを復号する
     rslt = cred.decrypted_passphrase(
@@ -137,8 +144,10 @@ def register_credentials():
         data = json.load(f)
 
     ### 秘密鍵と公開鍵の生成
-    # Credentialsクラスのインスタンスを作成します。
-    cred = Credentials.Credentials(login_id, password, "")
+    # Credentialsクラスのインスタンスを作成し、ログインIDとパスワードをCredentialsクラスに設定します。
+    cred = Credentials.Credentials()
+    cred.username = login_id
+    cred.password = password
 
     ### パスフレーズを復号する
     rslt = cred.decrypted_passphrase(

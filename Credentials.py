@@ -8,12 +8,12 @@ import base64
 
 class Credentials():
 
-    def __init__(self, username, password, passphrase):
-        self.__username = username
-        self.__password = password
+    def __init__():
+        self.__username = ""
+        self.__password = ""
         self.__private_key = None
         self.__public_key = None
-        self.__passphrase = passphrase
+        self.__passphrase = ""
 
     def generate_keys(self):
         # 秘密鍵を生成
