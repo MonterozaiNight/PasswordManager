@@ -8,7 +8,7 @@ import base64
 
 class Credentials():
 
-    def __init__():
+    def __init__(self):
         self.__username = ""
         self.__password = ""
         self.__private_key = None
