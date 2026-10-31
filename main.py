@@ -16,10 +16,10 @@ symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
 
 def generate_passphrase():
 
-    ### サービス名とユーザー名を取得
+    ### マスターパスワードを取得
     master_password = master_password_entry.get()
 
-    ### サービス名とユーザー名の入力チェック
+    ### マスターパスワードの入力チェック
     if not master_password:
         message_label.config(text="マスターパスワードを入力してください。")
         return
