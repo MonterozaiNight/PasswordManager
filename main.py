@@ -14,6 +14,9 @@ letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
 numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
 
+def limit_char(str):
+    return len(str) <= 22
+
 def generate_passphrase():
 
     ### マスターパスワードを取得
@@ -182,6 +185,9 @@ window = Tk()
 window.title("Password Manager")
 window.config(padx=80, pady=60)
 
+# 入力制限のためのバリデーション関数を登録
+vc = window.register(limit_char)
+
 # 2, ラベルの設定
 master_password_label = Label(text="パスフレーズ復号化用マスターパスワード", padx=5, pady=5)
 master_password_label.grid(row=0, column=0)
@@ -201,7 +207,7 @@ master_password_entry.insert(0, "パスフレーズ復号化用マスターパ�
 master_password_entry.focus()  # ウィンドウ起動時にフォーカスを当てる
 loginId_entry = Entry(width=35)
 loginId_entry.grid(row=2, column=1, columnspan=2, padx=5, pady=5)
-password_entry = Entry(width=35)
+password_entry = Entry(width=35, validate="key", validatecommand=(vc, "%P"))
 password_entry.grid(row=3, column=1, padx=5, pady=5)
 
 # 4, ボタンの設定
