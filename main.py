@@ -1,18 +1,18 @@
-import pyperclip
 import os
 import json
 import base64
 from tkinter import *
 from tkinter import ttk
+import secrets
+import string
 from random import choice, randint, shuffle
 import Credentials
 
-letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 
-               'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 
-               'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-               'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
+rng = secrets.SystemRandom()
+
+letters = [rng.choice(string.ascii_letters) for _ in range(26)]
+numbers = [rng.choice(string.digits) for _ in range(10)]
+symbols = "!@#$%^&*()-_=+"
 
 def limit_char(str):
     return len(str) <= 22
@@ -29,10 +29,10 @@ def generate_passphrase():
 
     ### パスフレーズ生成
     # 4～10文字のランダムな英字、3～6文字のランダムな数字、3～6文字のランダムな記号を組み合わせてパスフレーズを生成
-    passphrase_list = [choice(letters) for _ in range(randint(4, 10))]
-    passphrase_list.extend([choice(numbers) for _ in range(randint(3, 6))])
-    passphrase_list.extend([choice(symbols) for _ in range(randint(3, 6))])
-    shuffle(passphrase_list)
+    passphrase_list = [secrets.choice(letters) for _ in range(rng.randint(4, 10))]
+    passphrase_list.extend([secrets.choice(numbers) for _ in range(rng.randint(3, 6))])
+    passphrase_list.extend([secrets.choice(symbols) for _ in range(rng.randint(3, 6))])
+    rng.shuffle(passphrase_list)
 
     # ソルトを生成
     salt_bytes = os.urandom(16)
@@ -64,10 +64,10 @@ def generate_passphrase():
 def generate_password():
 
     ### パスワード原案を作成
-    password_list = [choice(letters) for _ in range(randint(4, 10))]
-    password_list.extend([choice(numbers) for _ in range(randint(3, 6))])
-    password_list.extend([choice(symbols) for _ in range(randint(3, 6))])
-    shuffle(password_list)
+    password_list = [secrets.choice(letters) for _ in range(rng.randint(4, 10))]
+    password_list.extend([secrets.choice(numbers) for _ in range(rng.randint(3, 6))])
+    password_list.extend([secrets.choice(symbols) for _ in range(rng.randint(3, 6))])
+    rng.shuffle(password_list)
 
     ### パスワードをエントリーに表示
     password = "".join(password_list)
@@ -127,7 +127,10 @@ def decrypt_password():
     window.clipboard_append(decrypted_password)
 
     ### メッセージを表示
-    message_label.config(text="復号化パスワードをコピーしました。")
+    message_label.config(text="復号化パスワードをコピーしました。15秒後に消去します。")
+
+    ### 15秒後にクリップボードを消去
+    window.after(15000, lambda: window.clipboard_clear())
 
 def register_credentials():
 
