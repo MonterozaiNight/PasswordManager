@@ -5,7 +5,6 @@ from tkinter import *
 from tkinter import ttk
 import secrets
 import string
-from random import choice, randint, shuffle
 import Credentials
 
 rng = secrets.SystemRandom()
