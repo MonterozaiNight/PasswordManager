@@ -11,17 +11,14 @@ class Credentials():
     def __init__(self):
         self.__username = ""
         self.__password = ""
-        self.__private_key = None
-        self.__public_key = None
-        self.__passphrase = ""
 
-    def generate_keys(self):
+    def generate_keys(self, passphrase):
         # 秘密鍵を生成
-        self.__private_key = self.create_private_key()
+        private_key = self.create_private_key(passphrase)
         # 公開鍵を生成
-        self.__public_key = self.create_public_key()
+        public_key = self.create_public_key(private_key, passphrase)
         ## 秘密鍵と公開鍵をファイルに保存
-        self.save_keys_to_files()
+        self.save_keys_to_files(private_key, public_key)
 
     @property
     def username(self):
@@ -39,23 +36,7 @@ class Credentials():
     def password(self, value):
         self.__password = value
 
-    @property
-    def passphrase(self):
-        return self.__passphrase
-
-    @passphrase.setter
-    def passphrase(self, value):
-        self.__passphrase = value
-
-    @property
-    def private_key(self):
-        return self.__private_key
-
-    @private_key.setter
-    def private_key(self, value):
-        self.__private_key = value
-
-    def create_private_key(self):
+    def create_private_key(self, passphrase):
         # 秘密鍵を生成
         private_key = rsa.generate_private_key(
             public_exponent=65537,
@@ -66,16 +47,16 @@ class Credentials():
         private_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.BestAvailableEncryption(self.__passphrase.encode())
+            encryption_algorithm=serialization.BestAvailableEncryption(passphrase.encode())
         )
 
         return private_pem
 
-    def create_public_key(self):
+    def create_public_key(self, private_key, passphrase):
         # 秘密鍵から公開鍵を取得
         private_key = serialization.load_pem_private_key(
-            self.__private_key,
-            password=self.__passphrase.encode()
+            private_key,
+            password=passphrase.encode()
         )
         public_key = private_key.public_key()
 
@@ -87,18 +68,21 @@ class Credentials():
 
         return public_pem
 
-    def save_keys_to_files(self):
+    def save_keys_to_files(self, private_key, public_key, private_key_path="private_key.pem", public_key_path="public_key.pem"):
         # 秘密鍵をファイルに保存
-        with open("private_key.pem", "wb") as private_file:
-            private_file.write(self.__private_key)
+        with open(private_key_path, "wb") as private_file:
+            private_file.write(private_key)
 
         # 公開鍵をファイルに保存
-        with open("public_key.pem", "wb") as public_file:
-            public_file.write(self.__public_key)
+        with open(public_key_path, "wb") as public_file:
+            public_file.write(public_key)
 
-    def encrypt_password(self):
+    def encrypt_password(self, public_key_path = "public_key.pem"):
+        # 公開鍵ファイルを読み込んで、公開鍵を取得
+        with open(public_key_path, "rb") as public_file:
+            public_key = serialization.load_pem_public_key(public_file.read())
+
         # 公開鍵を使ってパスワードを暗号化
-        public_key = serialization.load_pem_public_key(self.__public_key)
         encrypted_password = public_key.encrypt(
             self.__password.encode(),
             padding.OAEP(
@@ -110,11 +94,15 @@ class Credentials():
 
         return encrypted_password
 
-    def decrypt_password(self, encrypted_password_bytes):
+    def decrypt_password(self, passphrase, encrypted_password_bytes, private_key_path = "private_key.pem"):
+        # 秘密鍵を読み込む
+        with open(private_key_path, "rb") as private_file:
+            private_pem = serialization.load_pem_private_key(private_file.read(), password=passphrase.encode())
+
         # 秘密鍵を使って暗号化されたパスワードを復号化
         private_key = serialization.load_pem_private_key(
-            self.__private_key,
-            password=self.__passphrase.encode()
+            private_pem,
+            password=passphrase.encode()
         )
 
         decrypted_password = private_key.decrypt(
@@ -128,27 +116,26 @@ class Credentials():
 
         return decrypted_password.decode()
 
-    def encrypted_passphrase(self, user_password, salt):
+    def encrypted_passphrase(self, passphrase, user_password, salt):
         ### マスターパスワードとソルトからFernet用の32バイトの暗号化キーを生成
         key = self.derive_key(user_password, salt)
         cipher = Fernet(key)
 
-        return cipher.encrypt(self.__passphrase.encode())
+        return cipher.encrypt(passphrase.encode())
 
-    def decrypted_passphrase(self, decrypted_data, user_password, salt):
+    def decrypted_passphrase(self, encrypted_data, user_password, salt):
         try:
             # マスターパスワードとソルトを使って鍵を生成
             key = self.derive_key(user_password, salt)
             cipher = Fernet(key)
 
             # 復号する
-            decrypted_passphrase = cipher.decrypt(decrypted_data).decode()
+            decrypted_passphrase = cipher.decrypt(encrypted_data).decode()
             print("復号成功！ パスフレーズを取得できました。")
-            self.__passphrase = decrypted_passphrase
-            return True
+            return decrypted_passphrase
         except Exception:
             print("エラー: パスワードが違うか、データが破損しています。")
-            return False
+            return None
 
     def derive_key(self, user_password, salt):
         kdf = PBKDF2HMAC(

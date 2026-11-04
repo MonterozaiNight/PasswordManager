@@ -43,10 +43,8 @@ def generate_passphrase():
     ### パスフレーズを暗号化します。
     # Credentialsクラスをインスタンス化
     cred = Credentials.Credentials()
-    # Credentialsクラスのパスフレーズを設定
-    cred.passphrase = "".join(passphrase_list)
     # 暗号化パスフレーズを取得します。
-    encrypted_passphrase = cred.encrypted_passphrase(user_password, salt_bytes)
+    encrypted_passphrase = cred.encrypted_passphrase("".join(passphrase_list), user_password, salt_bytes)
 
     ### ソルトと暗号化パスフレーズをJSON形式で保存
     passphrase_json = {
@@ -120,7 +118,7 @@ def decrypt_password():
         cred.private_key = private_file.read()
 
     ### 暗号化されたパスワードを復号化
-    decrypted_password = cred.decrypt_password(bytes.fromhex(credentials["encrypted_password"]))
+    decrypted_password = cred.decrypt_password(rslt, bytes.fromhex(credentials["encrypted_password"]))
 
     ### 復号化されたパスワードをクリップボードにコピー
     window.clipboard_clear()
@@ -141,7 +139,7 @@ def register_credentials():
 
     ### ログインID/Eメール、パスワードの入力チェック
     if not master_password or not login_id or not password:
-        message_label.config(text="ロマスターパスワードとログインID/Eメールとパスワードを入力してください。")
+        message_label.config(text="マスターパスワードとログインID/Eメールとパスワードを入力してください。")
         return
 
     ### 暗号化パスフレーズ用JSONから暗号化パスフレーズとソルトを取得
@@ -166,7 +164,7 @@ def register_credentials():
         return
 
     # 生成された秘密鍵と公開鍵をファイルに保存します。
-    cred.generate_keys()
+    cred.generate_keys(rslt)
 
     ### パスワードを暗号化してJSON形式で保存
     credentials = {
